@@ -1,109 +1,111 @@
 % plot_results.m
 %
-% AMME5520 Lab 1.2 — Results plotting script
+% AMME5520 Lab 1 — Results plotting script
 %
-% Loads saved .mat results and generates publication-quality figures of
-% the angular velocity response and control input.
-%
-% HOW TO USE:
-%   After running a simulation or hardware test and saving results:
-%     save('lab1_cl_results.mat', 'u', 'y', 't')   % or lab1_sim_results.mat
-%
-%   Edit the SETTINGS section below (filename, reference value),
-%   then run: plot_results in the MATLAB Command Window.
+% Loads hardware open-loop and closed-loop .mat results and generates
+% publication-quality figures.
+
+close all; clear; clc;
 
 %% =========================================================================
-%  SETTINGS — edit these to match your run
+%  SETTINGS
 % =========================================================================
 
-results_file = 'lab1_cl_results.mat';  % file to load (change as needed)
-x_ref        = 10;                     % reference velocity used (rad/s)
-plot_title   = 'Closed-Loop Step Response — Simulated Plant';
-
-% Set to true if you also want to save the figure as a .png
-save_figure  = false;
-figure_file  = 'lab1_cl_response.png';
+x_ref = 10;  % reference velocity (rad/s) — closed-loop only
 
 %% =========================================================================
-%  LOAD DATA
+%  FIGURE 1: Open-Loop Hardware Response
 % =========================================================================
 
-if ~isfile(results_file)
-    error('Results file ''%s'' not found.\nRun the simulation first and save with:\n  save(''%s'', ''u'', ''y'', ''t'')', ...
-        results_file, results_file);
-end
+ol = load('lab1_hw_openloop_results.mat');
+t_ol = ol.t(:);
+y_ol = ol.y(:);
+u_ol = double(ol.u(:));
 
-data = load(results_file);
+fig1 = figure('Name', 'Open-Loop Response', 'NumberTitle', 'off', ...
+              'Units', 'centimeters', 'Position', [2, 2, 22, 14]);
 
-% Support both variable-name conventions
-t = data.t(:);   % time vector (s)
-y = data.y(:);   % angular velocity output (rad/s)
-u = data.u(:);   % control input (V)
+% --- Angular velocity ---
+ax1 = subplot(2,1,1);
+plot(t_ol, y_ol, 'Color', [0 0.45 0.74], 'LineWidth', 1.4);
+ylabel('Angular velocity (rad/s)', 'FontSize', 11);
+title('Open-Loop Hardware Response', 'FontSize', 13);
+grid on; box on;
+set(ax1, 'FontSize', 10);
+xlim([t_ol(1) t_ol(end)]);
+
+% --- Control input ---
+ax2 = subplot(2,1,2);
+plot(t_ol, u_ol, 'Color', [0.85 0.33 0.10], 'LineWidth', 1.4);
+xlabel('Time (s)', 'FontSize', 11);
+ylabel('Control input (V)', 'FontSize', 11);
+title('Control Input', 'FontSize', 13);
+grid on; box on;
+set(ax2, 'FontSize', 10);
+xlim([t_ol(1) t_ol(end)]);
+
+linkaxes([ax1 ax2], 'x');
 
 %% =========================================================================
-%  PLOT
+%  FIGURE 2: Closed-Loop Hardware Response
 % =========================================================================
 
-fig = figure('Name', 'Lab 1 Results', 'NumberTitle', 'off', ...
-             'Units', 'centimeters', 'Position', [2, 2, 20, 14]);
+cl = load('lab1_hw_closedloop_results.mat');
+t_cl = cl.t(:);
+y_cl = cl.y(:);
+u_cl = cl.u(:);
 
-% --- Top subplot: angular velocity ---
-ax1 = subplot(2, 1, 1);
+fig2 = figure('Name', 'Closed-Loop Response', 'NumberTitle', 'off', ...
+              'Units', 'centimeters', 'Position', [26, 2, 22, 14]);
+
+% --- Angular velocity with reference ---
+ax3 = subplot(2,1,1);
 hold on;
-
-% Reference line
-yline(x_ref, '--', 'Reference', ...
-    'Color', [0.6, 0.6, 0.6], ...
-    'LineWidth', 1.2, ...
-    'LabelVerticalAlignment', 'bottom');
-
-% System response
-plot(t, y, 'b-', 'LineWidth', 1.5);
-
+yline(x_ref, '--', 'Color', [0.5 0.5 0.5], 'LineWidth', 1.2);
+plot(t_cl, y_cl, 'Color', [0 0.45 0.74], 'LineWidth', 1.4);
 hold off;
-xlabel('Time (s)');
-ylabel('Angular velocity (rad/s)');
-title(plot_title);
-legend('Reference', 'Response', 'Location', 'southeast');
-grid on;
-xlim([t(1), t(end)]);
+ylabel('Angular velocity (rad/s)', 'FontSize', 11);
+title('Closed-Loop Hardware Step Response', 'FontSize', 13);
+legend('Reference', 'Response', 'Location', 'best', 'FontSize', 10);
+grid on; box on;
+set(ax3, 'FontSize', 10);
+xlim([t_cl(1) t_cl(end)]);
 
-% --- Bottom subplot: control input ---
-ax2 = subplot(2, 1, 2);
-plot(t, u, 'r-', 'LineWidth', 1.5);
-xlabel('Time (s)');
-ylabel('Control input, u (V)');
-title('Control input');
-grid on;
-xlim([t(1), t(end)]);
+% --- Control input ---
+ax4 = subplot(2,1,2);
+plot(t_cl, u_cl, 'Color', [0.85 0.33 0.10], 'LineWidth', 1.4);
+xlabel('Time (s)', 'FontSize', 11);
+ylabel('Control input (V)', 'FontSize', 11);
+title('Control Input', 'FontSize', 13);
+grid on; box on;
+set(ax4, 'FontSize', 10);
+xlim([t_cl(1) t_cl(end)]);
 
-% Link x-axes so zooming on one zooms both
-linkaxes([ax1, ax2], 'x');
+linkaxes([ax3 ax4], 'x');
 
 %% =========================================================================
-%  OPTIONAL: SAVE FIGURE
+%  SUMMARY STATISTICS (closed-loop)
 % =========================================================================
 
-if save_figure
-    exportgraphics(fig, figure_file, 'Resolution', 300);
-    fprintf('Figure saved to: %s\n', figure_file);
-end
-
-%% Print summary statistics
-fprintf('\n--- Response Summary ---\n');
+fprintf('\n--- Closed-Loop Response Summary ---\n');
 fprintf('Reference velocity : %.1f rad/s\n', x_ref);
 
-% Find steady-state (average of last 20%% of the run)
-ss_idx = t >= 0.8 * t(end);
-ss_val = mean(y(ss_idx));
+ss_idx = t_cl >= 0.8 * t_cl(end);
+ss_val = mean(y_cl(ss_idx));
 fprintf('Steady-state output: %.2f rad/s\n', ss_val);
 fprintf('Steady-state error : %.2f rad/s  (%.1f%%)\n', ...
-    x_ref - ss_val, 100 * (x_ref - ss_val) / x_ref);
+    x_ref - ss_val, 100 * abs(x_ref - ss_val) / x_ref);
 
-% Rise time: 10%% to 90%% of reference
-y_norm = (y - y(1)) / (x_ref - y(1));
+y_norm = (y_cl - y_cl(1)) / (x_ref - y_cl(1));
 i10 = find(y_norm >= 0.10, 1);
 i90 = find(y_norm >= 0.90, 1);
 if ~isempty(i10) && ~isempty(i90)
-    fprintf('Rise time (10-90%%): %.3f s\n', t(i90) - t(i10));
+    fprintf('Rise time (10-90%%): %.3f s\n', t_cl(i90) - t_cl(i10));
+end
+
+y_peak = max(y_cl);
+if y_peak > x_ref
+    fprintf('Overshoot          : %.1f%%\n', 100*(y_peak - x_ref)/x_ref);
+else
+    fprintf('Overshoot          : none\n');
 end
